@@ -221,5 +221,7 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
     super.dispose();
   }
 
-  void _onTapStudentList() {}
+  void _onTapStudentList() {
+    Navigator.pushNamed(context, '/student-list');
+  }
 }

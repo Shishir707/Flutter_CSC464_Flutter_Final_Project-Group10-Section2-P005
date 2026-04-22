@@ -7,6 +7,7 @@ import 'UI/Screen/add_course.dart';
 import 'UI/Screen/course_screen.dart';
 import 'UI/Screen/splash_screen.dart';
 import 'UI/Screen/student_enrollment_screen.dart';
+import 'UI/Screen/student_list_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         '/course': (_) => CourseScreen(),
         '/add-course': (_) => AddCourseScreen(),
         '/student-enrollment': (_) => StudentEnrollmentScreen(),
+        '/student-list': (_) => StudentListScreen(),
       },
 
       theme: ThemeData(
