@@ -34,5 +34,6 @@ flutter:
 
   assets:
     - assets/animation/education.json
+    - assets/images/
 
 
