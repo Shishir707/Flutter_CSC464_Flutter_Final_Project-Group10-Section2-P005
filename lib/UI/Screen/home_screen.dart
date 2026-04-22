@@ -40,6 +40,15 @@ class HomeScreen extends StatelessWidget {
 
               SizedBox(height: 10),
 
+              Text(
+                "Welcome to Academix",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+
+              Divider(color: Colors.red),
+
+              SizedBox(height: 20),
+
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
