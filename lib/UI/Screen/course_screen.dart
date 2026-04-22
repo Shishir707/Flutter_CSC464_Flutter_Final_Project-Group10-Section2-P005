@@ -3,6 +3,8 @@ import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../Widget/edit_dialog.dart';
+
 class CourseScreen extends StatefulWidget {
   const CourseScreen({super.key});
 
@@ -14,7 +16,7 @@ class _CourseScreenState extends State<CourseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: mainAppBar(context, "📚 Courses"),
+      appBar: mainAppBar(context, "📚 All Courses"),
 
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection("courses").snapshots(),
@@ -69,7 +71,15 @@ class _CourseScreenState extends State<CourseScreen> {
 
                         IconButton(
                           onPressed: () => _onTapDeleteButton(course.id),
-                          icon: Icon(Icons.delete, color: Colors.red[400]),
+                          icon: Icon(Icons.delete, color: Colors.red[200]),
+                        ),
+
+                        IconButton(
+                          onPressed: () => _onTapEditButton(
+                            course.id,
+                            course.data() as Map<String, dynamic>,
+                          ),
+                          icon: const Icon(Icons.edit, color: Colors.white),
                         ),
                       ],
                     ),
@@ -128,5 +138,12 @@ class _CourseScreenState extends State<CourseScreen> {
 
   void _addCourse() {
     Navigator.pushNamed(context, '/add-course');
+  }
+
+  void _onTapEditButton(String id, Map<String, dynamic> data) {
+    showDialog(
+      context: context,
+      builder: (_) => EditCourseDialog(id: id, data: data),
+    );
   }
 }
