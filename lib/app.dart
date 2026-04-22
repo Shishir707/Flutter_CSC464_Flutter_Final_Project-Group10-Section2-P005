@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'UI/Screen/add_course.dart';
 import 'UI/Screen/course_screen.dart';
 import 'UI/Screen/splash_screen.dart';
+import 'UI/Screen/student_enrollment_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
         '/sign-up': (_) => SignUpScreen(),
         '/course': (_) => CourseScreen(),
         '/add-course': (_) => AddCourseScreen(),
+        '/student-enrollment': (_) => StudentEnrollmentScreen(),
       },
 
       theme: ThemeData(

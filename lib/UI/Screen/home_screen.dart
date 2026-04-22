@@ -59,7 +59,9 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.person,
                     title: "Student Enrollment",
                     color: Colors.blue,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/student-enrollment');
+                    },
                   ),
                   MenuCard(
                     icon: Icons.check_circle,
