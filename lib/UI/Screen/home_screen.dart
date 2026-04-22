@@ -7,7 +7,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Academix",),
+        title: Text(
+          "🎓 Academix",
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         centerTitle: true,
       ),
     );
