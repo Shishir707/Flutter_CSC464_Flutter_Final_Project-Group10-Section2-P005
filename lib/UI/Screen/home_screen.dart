@@ -79,7 +79,9 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.calendar_month,
                     title: "Class Routine",
                     color: Colors.pink,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/routine');
+                    },
                   ),
                   MenuCard(
                     icon: Icons.info,

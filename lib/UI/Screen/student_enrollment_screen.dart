@@ -87,9 +87,17 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
 
               SizedBox(height: 15),
 
-              ElevatedButton(
-                onPressed: _onTapAddStudent,
-                child: Text("Add Student"),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _onTapAddStudent,
+                  child: Text(
+                    "Add Student",
+                    style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
 
               SizedBox(height: 20),

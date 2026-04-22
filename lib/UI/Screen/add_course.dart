@@ -64,7 +64,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
 
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: _isLoading ? null : _addCourse,
                   child: _isLoading
                       ? CircularProgressIndicator(color: Colors.white)

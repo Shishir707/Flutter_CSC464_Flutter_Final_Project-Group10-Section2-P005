@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'UI/Screen/add_course.dart';
 import 'UI/Screen/course_screen.dart';
+import 'UI/Screen/routine_screen.dart';
 import 'UI/Screen/splash_screen.dart';
 import 'UI/Screen/student_enrollment_screen.dart';
 import 'UI/Screen/student_list_screen.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         '/add-course': (_) => AddCourseScreen(),
         '/student-enrollment': (_) => StudentEnrollmentScreen(),
         '/student-list': (_) => StudentListScreen(),
+        '/routine': (_) => RoutineScreen(),
       },
 
       theme: ThemeData(
