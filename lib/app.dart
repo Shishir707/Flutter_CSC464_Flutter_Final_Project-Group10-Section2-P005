@@ -3,6 +3,8 @@ import 'package:academix/UI/Screen/sign_in_screen.dart';
 import 'package:academix/UI/Screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
+import 'UI/Screen/add_course.dart';
+import 'UI/Screen/course_screen.dart';
 import 'UI/Screen/splash_screen.dart';
 
 class MyApp extends StatelessWidget {
@@ -21,6 +23,8 @@ class MyApp extends StatelessWidget {
         '/home': (_) => HomeScreen(),
         '/sign-in': (_) => SignInScreen(),
         '/sign-up': (_) => SignUpScreen(),
+        '/course': (_) => CourseScreen(),
+        '/add-course': (_) => AddCourseScreen(),
       },
 
       theme: ThemeData(

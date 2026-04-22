@@ -1,4 +1,5 @@
 import 'package:academix/UI/Card/menu_card.dart';
+import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/Utils/asset_path.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,18 +10,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("🎓 Academix"),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            tooltip: "Logout",
-            color: Colors.red,
-            onPressed: () => _logout(context),
-          ),
-        ],
-      ),
+      appBar: mainAppBar(context, "🎓 Academix"),
 
       body: SingleChildScrollView(
         child: Padding(
@@ -61,7 +51,9 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.book,
                     title: "Courses Management",
                     color: Colors.deepPurple,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/course');
+                    },
                   ),
                   MenuCard(
                     icon: Icons.person,
