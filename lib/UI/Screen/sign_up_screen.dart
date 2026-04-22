@@ -2,17 +2,20 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/gestures.dart' show TapGestureRecognizer;
 import 'package:flutter/material.dart';
 
-class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<SignInScreen> createState() => _SignInScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -24,35 +27,40 @@ class _SignInScreenState extends State<SignInScreen> {
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Text(
-                      "🎓 Academix",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  Text(
+                    "🎓 Academix",
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
 
-                  SizedBox(height: 40),
+                  SizedBox(height: 30),
 
-                  Center(
-                    child: Text(
-                      "Sign In with your email & password",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+                  Text(
+                    "Create Account",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
                   ),
 
-                  SizedBox(height: 20),
+                  SizedBox(height: 25),
+
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: "Full Name",
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Enter name";
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 15),
 
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "Email",
                       prefixIcon: Icon(Icons.email),
                     ),
@@ -81,7 +89,30 @@ class _SignInScreenState extends State<SignInScreen> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Enter password";
+                      } else if (value.length < 6) {
+                        return "Enter at least 6 character";
                       }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 15),
+
+                  TextFormField(
+                    controller: _confirmController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: "Confirm",
+                      prefixIcon: Icon(Icons.lock),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Enter confirm password";
+                      } else if (_passwordController.text !=
+                          _confirmController) {
+                        return "Password do not match";
+                      }
+
                       return null;
                     },
                   ),
@@ -91,12 +122,8 @@ class _SignInScreenState extends State<SignInScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          Navigator.pushReplacementNamed(context, 'home');
-                        }
-                      },
-                      child: Text("Sign In"),
+                      onPressed: _onTapSignUpButton,
+                      child: Text("Sign Up"),
                     ),
                   ),
 
@@ -105,32 +132,23 @@ class _SignInScreenState extends State<SignInScreen> {
                   Center(
                     child: RichText(
                       text: TextSpan(
-                        text: "Don't have an account? ",
+                        text: "Have an account? ",
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w400,
                         ),
                         children: [
                           TextSpan(
-                            text: "Sign Up",
+                            text: "Sign In",
                             style: TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.bold,
                             ),
                             recognizer: TapGestureRecognizer()
-                              ..onTap = _onTapSignUpButton,
+                              ..onTap = _onTapSignInButton,
                           ),
                         ],
                       ),
-                    ),
-                  ),
-
-                  SizedBox(height: 15),
-
-                  Center(
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(color: Colors.grey),
                     ),
                   ),
                 ],
@@ -142,7 +160,9 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  void _onTapSignUpButton() {
-    Navigator.pushNamed(context, 'sign-up');
+  void _onTapSignInButton() {
+    Navigator.pushNamed(context, 'sign-in');
   }
+
+  void _onTapSignUpButton() {}
 }

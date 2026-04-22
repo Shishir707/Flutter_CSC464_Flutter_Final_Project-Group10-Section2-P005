@@ -7,17 +7,25 @@ version: 1.0.0+1
 environment:
   sdk: ^3.9.0
 
+
 dependencies:
   flutter:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
   lottie: ^3.1.0
+  email_validator: ^2.1.17
+  firebase_core: ^4.7.0
+  firebase_auth: ^6.4.0
+
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+
 
 flutter:
   uses-material-design: true

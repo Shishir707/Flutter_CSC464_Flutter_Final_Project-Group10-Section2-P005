@@ -1,4 +1,6 @@
 import 'package:academix/UI/Screen/home_screen.dart';
+import 'package:academix/UI/Screen/sign_in_screen.dart';
+import 'package:academix/UI/Screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'UI/Screen/splash_screen.dart';
@@ -17,6 +19,8 @@ class MyApp extends StatelessWidget {
       routes: <String, WidgetBuilder>{
         '/': (_) => SplashScreen(),
         'home': (_) => HomeScreen(),
+        'sign-in': (_) => SignInScreen(),
+        'sign-up': (_) => SignUpScreen(),
       },
 
       theme: ThemeData(
