@@ -18,9 +18,9 @@ class MyApp extends StatelessWidget {
 
       routes: <String, WidgetBuilder>{
         '/': (_) => SplashScreen(),
-        'home': (_) => HomeScreen(),
-        'sign-in': (_) => SignInScreen(),
-        'sign-up': (_) => SignUpScreen(),
+        '/home': (_) => HomeScreen(),
+        '/sign-in': (_) => SignInScreen(),
+        '/sign-up': (_) => SignUpScreen(),
       },
 
       theme: ThemeData(

@@ -1,6 +1,9 @@
 import 'package:email_validator/email_validator.dart';
-import 'package:flutter/gestures.dart' show TapGestureRecognizer;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+
+import '../Widget/scaffold_message.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -91,12 +94,8 @@ class _SignInScreenState extends State<SignInScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          Navigator.pushReplacementNamed(context, 'home');
-                        }
-                      },
-                      child: Text("Sign In"),
+                      onPressed: _onTapLoginButton,
+                      child: Text("Login"),
                     ),
                   ),
 
@@ -143,6 +142,39 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _onTapSignUpButton() {
-    Navigator.pushNamed(context, 'sign-up');
+    Navigator.pushNamed(context, '/sign-up');
+  }
+
+  void _onTapLoginButton() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        if (!mounted) return;
+
+        trueScaffoldMessage(context, 'Login successful 🎉');
+
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (!mounted) return;
+
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+
+        if (e.code == 'user-not-found') {
+          falseScaffoldMessage(context, 'No user found for this email');
+        } else if (e.code == 'wrong-password') {
+          falseScaffoldMessage(context, 'Wrong password');
+        } else if (e.code == 'invalid-email') {
+          falseScaffoldMessage(context, 'Invalid email');
+        } else {
+          falseScaffoldMessage(context, 'Login failed');
+        }
+      }
+    }
   }
 }
