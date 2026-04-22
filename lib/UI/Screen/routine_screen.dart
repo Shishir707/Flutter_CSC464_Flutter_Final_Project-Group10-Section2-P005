@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:academix/UI/Widget/main_appbar.dart';
+import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -116,7 +117,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _addRoutine,
+                    onPressed: _onTapAddRoutine,
                     child: Text(
                       "Add Routine",
                       style: Theme.of(context).textTheme.labelLarge!.copyWith(
@@ -131,7 +132,6 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
           const Divider(),
 
-          // 📅 WEEKLY VIEW
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -215,18 +215,15 @@ class _RoutineScreenState extends State<RoutineScreen> {
     );
   }
 
-  Future<void> _addRoutine() async {
+  Future<void> _onTapAddRoutine() async {
     if (selectedCourseId == null ||
         selectedDay == null ||
         selectedTime == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Fill all fields")));
+      falseScaffoldMessage(context, "Fill all fields");
       return;
     }
 
     try {
-      // 🔥 CHECK DUPLICATE
       final existing = await FirebaseFirestore.instance
           .collection("routine")
           .where("courseId", isEqualTo: selectedCourseId)
@@ -234,35 +231,31 @@ class _RoutineScreenState extends State<RoutineScreen> {
           .where("time", isEqualTo: selectedTime)
           .get();
 
+      if (!mounted) return;
+
       if (existing.docs.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Routine already exists ❌")),
-        );
+        falseScaffoldMessage(context, "Routine already exists ❌");
         return;
       }
 
-      // ✅ ADD
       await FirebaseFirestore.instance.collection("routine").add({
         "courseId": selectedCourseId,
         "day": selectedDay,
-        "time": selectedTime, // ✅ FIXED
+        "time": selectedTime,
         "createdAt": Timestamp.now(),
       });
 
-      // ✅ CLEAR
       setState(() {
         selectedCourseId = null;
         selectedDay = null;
         selectedTime = null;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Routine added ✅")));
+      if (!mounted) return;
+
+      trueScaffoldMessage(context, "Routine added ✅");
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+      falseScaffoldMessage(context, "e.toString()");
     }
   }
 }
