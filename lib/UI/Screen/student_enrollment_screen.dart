@@ -4,6 +4,8 @@ import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../Data/Modals/student_model.dart';
+
 class StudentEnrollmentScreen extends StatefulWidget {
   const StudentEnrollmentScreen({super.key});
 
@@ -19,15 +21,6 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _idController = TextEditingController();
-
-  void _deleteStudent(String studentId) {
-    FirebaseFirestore.instance
-        .collection("courses")
-        .doc(selectedCourseId)
-        .collection("students")
-        .doc(studentId)
-        .delete();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +50,7 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
                     items: courses.map((course) {
                       return DropdownMenuItem(
                         value: course.id,
-                        child: Text(course["title"]),
+                        child: Text(course["name"]),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -72,17 +65,17 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
               SizedBox(height: 15),
 
               CustomTextField(
-                controller: _idController,
-                label: "Student ID",
-                icon: Icons.badge,
+                controller: _nameController,
+                label: "Student Name",
+                icon: Icons.person,
               ),
 
               SizedBox(height: 15),
 
               CustomTextField(
-                controller: _nameController,
-                label: "Student Name",
-                icon: Icons.person,
+                controller: _idController,
+                label: "Student ID",
+                icon: Icons.badge,
               ),
 
               SizedBox(height: 15),
@@ -116,7 +109,14 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
                             return Center(child: CircularProgressIndicator());
                           }
 
-                          final students = snapshot.data!.docs;
+                          final students = snapshot.data!.docs
+                              .map(
+                                (doc) => Student.fromJson(
+                                  doc.data() as Map<String, dynamic>,
+                                  doc.id,
+                                ),
+                              )
+                              .toList();
 
                           if (students.isEmpty) {
                             return Center(child: Text("No students added"));
@@ -129,8 +129,8 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
 
                               return Card(
                                 child: ListTile(
-                                  title: Text(student["name"]),
-                                  subtitle: Text(student["studentId"]),
+                                  title: Text(student.name),
+                                  subtitle: Text(student.studentId),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -140,17 +140,14 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
                                           color: Colors.red,
                                         ),
                                         onPressed: () =>
-                                            _deleteStudent(student.id),
+                                            _deleteStudent(student),
                                       ),
                                       IconButton(
                                         icon: Icon(
                                           Icons.edit,
                                           color: Colors.blue,
                                         ),
-                                        onPressed: () => _editStudent(
-                                          student.id,
-                                          student.data(),
-                                        ),
+                                        onPressed: () => _editStudent(student),
                                       ),
                                     ],
                                   ),
@@ -196,15 +193,16 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
         return;
       }
 
+      final student = Student(
+        name: _nameController.text.trim(),
+        studentId: _idController.text.trim(),
+      );
+
       await FirebaseFirestore.instance
           .collection("courses")
           .doc(selectedCourseId)
           .collection("students")
-          .add({
-            "name": _nameController.text.trim(),
-            "studentId": _idController.text.trim(),
-            "createdAt": Timestamp.now(),
-          });
+          .add(student.toJson());
 
       if (!mounted) return;
 
@@ -215,7 +213,16 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
     }
   }
 
-  void _editStudent(String id, Object? data) {}
+  void _editStudent(Student student) {}
+
+  void _deleteStudent(Student student) {
+    FirebaseFirestore.instance
+        .collection("courses")
+        .doc(selectedCourseId)
+        .collection("students")
+        .doc(student.id!)
+        .delete();
+  }
 
   void _clearController() {
     _nameController.clear();

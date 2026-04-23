@@ -1,6 +1,7 @@
 import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../Data/Modals/student_model.dart';
 
 class StudentListScreen extends StatelessWidget {
   const StudentListScreen({super.key});
@@ -8,13 +9,13 @@ class StudentListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: mainAppBar(context, "‍🎓 All Students"),
+      appBar: mainAppBar(context, "🎓 All Students"),
 
-      body: StreamBuilder(
+      body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection("courses").snapshots(),
         builder: (context, courseSnapshot) {
           if (!courseSnapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
 
           final courses = courseSnapshot.data!.docs;
@@ -24,7 +25,7 @@ class StudentListScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final course = courses[index];
 
-              return StreamBuilder(
+              return StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("courses")
                     .doc(course.id)
@@ -35,7 +36,14 @@ class StudentListScreen extends StatelessWidget {
                     return SizedBox();
                   }
 
-                  final students = studentSnapshot.data!.docs;
+                  final students = studentSnapshot.data!.docs
+                      .map(
+                        (doc) => Student.fromJson(
+                          doc.data() as Map<String, dynamic>,
+                          doc.id,
+                        ),
+                      )
+                      .toList();
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +57,7 @@ class StudentListScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          "📚 ${course['title']} (${course['code']})",
+                          "📚 ${course['name']} (${course['code']})",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -65,15 +73,26 @@ class StudentListScreen extends StatelessWidget {
                           ),
                           child: ListTile(
                             leading: Icon(Icons.person),
-                            title: Text(student["name"] ?? ""),
-                            subtitle: Text("ID: ${student["studentId"]}"),
-                            trailing: Text(
-                              course["department"] ?? "",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            title: Text(student.name),
+                            subtitle: Text("ID: ${student.studentId}"),
+
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () => _editStudent(student),
+                                ),
+
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _deleteStudent(student),
+                                ),
+                              ],
                             ),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   );
                 },
@@ -84,4 +103,8 @@ class StudentListScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _editStudent(Student student) {}
+
+  void _deleteStudent(Student student) {}
 }

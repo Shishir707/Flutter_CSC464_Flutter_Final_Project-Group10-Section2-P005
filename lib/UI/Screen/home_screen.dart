@@ -97,10 +97,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
-  void _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-
-    Navigator.pushNamedAndRemoveUntil(context, '/sign-in', (route) => false);
-  }
 }
