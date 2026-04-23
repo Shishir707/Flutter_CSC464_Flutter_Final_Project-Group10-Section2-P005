@@ -1,9 +1,9 @@
-import 'dart:ffi';
-
 import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
+import '../Data/Modals/routine_model.dart';
 
 class RoutineScreen extends StatefulWidget {
   const RoutineScreen({super.key});
@@ -41,7 +41,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
                     return DropdownButtonFormField<String>(
                       hint: Text("Select Course"),
-                      initialValue: selectedCourseId,
+                      value: selectedCourseId,
                       items: courses.map((c) {
                         return DropdownMenuItem(
                           value: c.id,
@@ -60,9 +60,9 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 SizedBox(height: 10),
 
                 DropdownButtonFormField<String>(
-                  hint: const Text("Select Day"),
-                  initialValue: selectedDay,
-                  items: const [
+                  hint: Text("Select Day"),
+                  value: selectedDay,
+                  items: [
                     DropdownMenuItem(value: "ST", child: Text("ST")),
                     DropdownMenuItem(value: "MW", child: Text("MW")),
                     DropdownMenuItem(value: "AR", child: Text("AR")),
@@ -77,8 +77,8 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 SizedBox(height: 10),
 
                 DropdownButtonFormField<String>(
-                  hint: const Text("Select Time Slot"),
-                  initialValue: selectedTime,
+                  hint: Text("Select Time Slot"),
+                  value: selectedTime,
                   items: [
                     DropdownMenuItem(
                       value: "08:00-09:30",
@@ -130,7 +130,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
             ),
           ),
 
-          const Divider(),
+          Divider(),
 
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -139,7 +139,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                   .snapshots(),
               builder: (context, routineSnapshot) {
                 if (!routineSnapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 return StreamBuilder<QuerySnapshot>(
@@ -148,26 +148,30 @@ class _RoutineScreenState extends State<RoutineScreen> {
                       .snapshots(),
                   builder: (context, courseSnapshot) {
                     if (!courseSnapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
+                      return Center(child: CircularProgressIndicator());
                     }
 
-                    final routines = routineSnapshot.data!.docs;
-                    final courses = courseSnapshot.data!.docs;
+                    final routines = routineSnapshot.data!.docs
+                        .map(
+                          (doc) => Routine.fromJson(
+                            doc.data() as Map<String, dynamic>,
+                            doc.id,
+                          ),
+                        )
+                        .toList();
 
+                    final courses = courseSnapshot.data!.docs;
                     final courseMap = {for (var c in courses) c.id: c["code"]};
 
-                    Map<String, List<Map<String, dynamic>>> grouped = {};
+                    Map<String, List<Routine>> grouped = {};
 
-                    for (var doc in routines) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final day = data["day"];
-
-                      grouped.putIfAbsent(day, () => []);
-                      grouped[day]!.add(data);
+                    for (var r in routines) {
+                      grouped.putIfAbsent(r.day, () => []);
+                      grouped[r.day]!.add(r);
                     }
 
                     if (grouped.isEmpty) {
-                      return const Center(child: Text("No routine added"));
+                      return Center(child: Text("No routine added"));
                     }
 
                     return ListView(
@@ -176,10 +180,10 @@ class _RoutineScreenState extends State<RoutineScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.all(10),
+                              padding: EdgeInsets.all(10),
                               child: Text(
                                 entry.key,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -187,17 +191,17 @@ class _RoutineScreenState extends State<RoutineScreen> {
                             ),
 
                             ...entry.value.map((r) {
-                              final title =
-                                  courseMap[r["courseId"]] ?? "Unknown";
+                              final courseName =
+                                  courseMap[r.courseId] ?? "Unknown";
 
                               return Card(
-                                margin: const EdgeInsets.symmetric(
+                                margin: EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 5,
                                 ),
                                 child: ListTile(
-                                  title: Text(title),
-                                  subtitle: Text("⏰ ${r["time"]}"),
+                                  title: Text(courseName),
+                                  subtitle: Text("⏰ ${r.time}"),
                                 ),
                               );
                             }),
@@ -231,19 +235,20 @@ class _RoutineScreenState extends State<RoutineScreen> {
           .where("time", isEqualTo: selectedTime)
           .get();
 
-      if (!mounted) return;
-
       if (existing.docs.isNotEmpty) {
         falseScaffoldMessage(context, "Routine already exists ❌");
         return;
       }
 
-      await FirebaseFirestore.instance.collection("routine").add({
-        "courseId": selectedCourseId,
-        "day": selectedDay,
-        "time": selectedTime,
-        "createdAt": Timestamp.now(),
-      });
+      final routine = Routine(
+        courseId: selectedCourseId!,
+        day: selectedDay!,
+        time: selectedTime!,
+      );
+
+      await FirebaseFirestore.instance
+          .collection("routine")
+          .add(routine.toJson());
 
       setState(() {
         selectedCourseId = null;
@@ -255,7 +260,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
       trueScaffoldMessage(context, "Routine added ✅");
     } catch (e) {
-      falseScaffoldMessage(context, "e.toString()");
+      falseScaffoldMessage(context, e.toString());
     }
   }
 }
