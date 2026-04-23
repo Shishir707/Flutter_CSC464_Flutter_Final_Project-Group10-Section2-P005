@@ -1,9 +1,9 @@
-import 'package:academix/UI/Data/Models/course_model.dart';
 import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../Data/Modals/course_modal.dart';
 import '../Widget/custom_field.dart';
 
 class AddCourseScreen extends StatefulWidget {

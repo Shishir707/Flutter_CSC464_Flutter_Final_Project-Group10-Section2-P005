@@ -2,8 +2,7 @@ import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import '../Data/Models/course_model.dart';
+import '../Data/Modals/course_modal.dart';
 import '../Widget/edit_dialog.dart';
 
 class CourseScreen extends StatefulWidget {
