@@ -67,7 +67,7 @@ class _CourseScreenState extends State<CourseScreen> {
                           child: Text(
                             course.name,
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black87,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),

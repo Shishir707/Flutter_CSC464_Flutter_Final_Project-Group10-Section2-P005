@@ -38,12 +38,12 @@ class MyApp extends StatelessWidget {
       },
 
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue.shade50),
 
         scaffoldBackgroundColor: Colors.blue.shade50,
 
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.blue.shade200,
           foregroundColor: Colors.black,
           elevation: 0,
         ),
