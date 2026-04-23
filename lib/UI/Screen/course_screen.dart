@@ -3,6 +3,7 @@ import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../Data/Models/course_model.dart';
 import '../Widget/edit_dialog.dart';
 
 class CourseScreen extends StatefulWidget {
@@ -29,7 +30,12 @@ class _CourseScreenState extends State<CourseScreen> {
             return Center(child: Text("No courses found"));
           }
 
-          final courses = snapshot.data!.docs;
+          final courses = snapshot.data!.docs
+              .map(
+                (doc) =>
+                    Course.fromJson(doc.data() as Map<String, dynamic>, doc.id),
+              )
+              .toList();
 
           return ListView.builder(
             padding: EdgeInsets.all(16),
@@ -60,7 +66,7 @@ class _CourseScreenState extends State<CourseScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            course["title"],
+                            course.name,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -70,16 +76,13 @@ class _CourseScreenState extends State<CourseScreen> {
                         ),
 
                         IconButton(
-                          onPressed: () => _onTapDeleteButton(course.id),
+                          onPressed: () => _onTapDeleteButton(course.id!),
                           icon: Icon(Icons.delete, color: Colors.red[200]),
                         ),
 
                         IconButton(
-                          onPressed: () => _onTapEditButton(
-                            course.id,
-                            course.data() as Map<String, dynamic>,
-                          ),
-                          icon: const Icon(Icons.edit, color: Colors.white),
+                          onPressed: () => _onTapEditButton(course),
+                          icon: Icon(Icons.edit, color: Colors.white),
                         ),
                       ],
                     ),
@@ -87,33 +90,10 @@ class _CourseScreenState extends State<CourseScreen> {
                     SizedBox(height: 6),
 
                     Text(
-                      "${course["code"]} • ${course["department"]}",
+                      " • ${course.code}",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 14,
-                      ),
-                    ),
-
-                    SizedBox(height: 10),
-
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white12,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "${course["credit"]} Credit",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
                     ),
                   ],
@@ -140,10 +120,10 @@ class _CourseScreenState extends State<CourseScreen> {
     Navigator.pushNamed(context, '/add-course');
   }
 
-  void _onTapEditButton(String id, Map<String, dynamic> data) {
+  void _onTapEditButton(Course course) {
     showDialog(
       context: context,
-      builder: (_) => EditCourseDialog(id: id, data: data),
+      builder: (_) => EditCourseDialog(course: course),
     );
   }
 }

@@ -1,35 +1,29 @@
 import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../Data/Models/course_model.dart';
 
 class EditCourseDialog extends StatefulWidget {
-  final String id;
-  final Map<String, dynamic> data;
+  final Course course;
 
-  const EditCourseDialog({super.key, required this.id, required this.data});
+  const EditCourseDialog({super.key, required this.course});
 
   @override
   State<EditCourseDialog> createState() => _EditCourseDialogState();
 }
 
 class _EditCourseDialogState extends State<EditCourseDialog> {
-  late TextEditingController _titleController;
+  late TextEditingController _nameController;
   late TextEditingController _codeController;
-  late TextEditingController _creditController;
-  late TextEditingController _departmentController;
+
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
 
-    _titleController = TextEditingController(text: widget.data["title"]);
-    _codeController = TextEditingController(text: widget.data["code"]);
-    _creditController = TextEditingController(
-      text: widget.data["credit"].toString(),
-    );
-    _departmentController = TextEditingController(
-      text: widget.data["department"],
-    );
+    _nameController = TextEditingController(text: widget.course.name);
+    _codeController = TextEditingController(text: widget.course.code);
   }
 
   @override
@@ -38,64 +32,77 @@ class _EditCourseDialogState extends State<EditCourseDialog> {
       title: Text("✏️ Edit Course"),
       content: SingleChildScrollView(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _field(_titleController, "Title"),
+            _field(_nameController, "Course Name"),
             SizedBox(height: 10),
-            _field(_codeController, "Code"),
-            SizedBox(height: 10),
-            _field(_creditController, "Credit", number: true),
-            SizedBox(height: 10),
-            _field(_departmentController, "Department"),
+            _field(_codeController, "Course Code"),
           ],
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
           child: Text("Cancel"),
         ),
-        ElevatedButton(onPressed: _updateCourse, child: Text("Update")),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _updateCourse,
+          child: _isLoading
+              ? SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text("Update"),
+        ),
       ],
     );
   }
 
-  Widget _field(
-    TextEditingController controller,
-    String label, {
-    bool number = false,
-  }) {
+  Widget _field(TextEditingController controller, String label) {
     return TextField(
       controller: controller,
-      keyboardType: number ? TextInputType.number : TextInputType.text,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+      ),
     );
   }
 
   Future<void> _updateCourse() async {
-    await FirebaseFirestore.instance
-        .collection("courses")
-        .doc(widget.id)
-        .update({
-          "title": _titleController.text.trim(),
-          "code": _codeController.text.trim(),
-          "credit": double.tryParse(_creditController.text.trim()) ?? 0,
-          "department": _departmentController.text.trim(),
-        });
+    final name = _nameController.text.trim();
+    final code = _codeController.text.trim();
 
-    trueScaffoldMessage(context, "Updated Successfully!");
+    if (name.isEmpty || code.isEmpty) {
+      trueScaffoldMessage(context, "Fields cannot be empty");
+      return;
+    }
 
-    if (mounted) {
-      Navigator.pop(context);
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection("courses")
+          .doc(widget.course.id)
+          .update({"name": name, "code": code});
+
+      if (mounted) {
+        Navigator.pop(context);
+        trueScaffoldMessage(context, "Updated Successfully!");
+      }
+    } catch (e) {
+      trueScaffoldMessage(context, "Update failed");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
+    _nameController.dispose();
     _codeController.dispose();
-    _departmentController.dispose();
-    _creditController.dispose();
-
     super.dispose();
   }
 }
