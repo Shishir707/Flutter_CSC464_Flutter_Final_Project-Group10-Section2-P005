@@ -4,6 +4,8 @@ import 'package:academix/UI/Screen/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'UI/Screen/add_course.dart';
+import 'UI/Screen/attendance_screen.dart';
+import 'UI/Screen/attendance_summary_screen.dart';
 import 'UI/Screen/course_screen.dart';
 import 'UI/Screen/routine_screen.dart';
 import 'UI/Screen/splash_screen.dart';
@@ -31,6 +33,8 @@ class MyApp extends StatelessWidget {
         '/student-enrollment': (_) => StudentEnrollmentScreen(),
         '/student-list': (_) => StudentListScreen(),
         '/routine': (_) => RoutineScreen(),
+        '/attendance': (_) => AttendanceScreen(),
+        '/summary': (_) => AttendanceSummaryScreen(),
       },
 
       theme: ThemeData(

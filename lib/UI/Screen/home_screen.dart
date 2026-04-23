@@ -67,13 +67,17 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.check_circle,
                     title: "Attendance",
                     color: Colors.green,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/attendance');
+                    },
                   ),
                   MenuCard(
                     icon: Icons.schedule,
                     title: "Attendance Summary",
                     color: Colors.purpleAccent,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/summary');
+                    },
                   ),
                   MenuCard(
                     icon: Icons.calendar_month,
