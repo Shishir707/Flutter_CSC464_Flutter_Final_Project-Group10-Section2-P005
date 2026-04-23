@@ -92,7 +92,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       (course) => DropdownMenuItem<String>(
                         value: course['id']?.toString(),
                         child: Text(
-                          '${course['title'] ?? ''} (${course['code'] ?? ''})',
+                          '${course['name'] ?? ''} (${course['code'] ?? ''})',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
