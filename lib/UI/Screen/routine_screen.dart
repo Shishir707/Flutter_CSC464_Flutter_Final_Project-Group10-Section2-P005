@@ -1,8 +1,10 @@
 import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/UI/Widget/scaffold_message.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../Provider/course_provider.dart';
+import '../../Provider/routine_provider.dart';
 import '../Data/Modals/routine_model.dart';
 
 class RoutineScreen extends StatefulWidget {
@@ -18,7 +20,33 @@ class _RoutineScreenState extends State<RoutineScreen> {
   String? selectedTime;
 
   @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      if (!mounted) return;
+      Provider.of<RoutineProvider>(context, listen: false).loadRoutines();
+      Provider.of<CourseProvider>(context, listen: false).loadCourses();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final courseProvider = Provider.of<CourseProvider>(context);
+    final routineProvider = Provider.of<RoutineProvider>(context);
+
+    final courses = courseProvider.courses;
+    final routines = routineProvider.routines;
+
+    final courseMap = {for (var course in courses) course.id: course.code};
+
+    Map<String, List<Routine>> grouped = {};
+
+    for (var routine in routines) {
+      grouped.putIfAbsent(routine.day, () => []);
+      grouped[routine.day]!.add(routine);
+    }
+
     return Scaffold(
       appBar: mainAppBar(context, '📅 Class Routine'),
 
@@ -28,32 +56,16 @@ class _RoutineScreenState extends State<RoutineScreen> {
             padding: EdgeInsets.all(12),
             child: Column(
               children: [
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection("courses")
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return CircularProgressIndicator();
-                    }
-
-                    final courses = snapshot.data!.docs;
-
-                    return DropdownButtonFormField<String>(
-                      hint: Text("Select Course"),
-                      value: selectedCourseId,
-                      items: courses.map((c) {
-                        return DropdownMenuItem(
-                          value: c.id,
-                          child: Text(c["code"]),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedCourseId = value;
-                        });
-                      },
-                    );
+                DropdownButtonFormField<String>(
+                  hint: Text("Select Course"),
+                  initialValue: selectedCourseId,
+                  items: courses.map((c) {
+                    return DropdownMenuItem(value: c.id, child: Text(c.code));
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedCourseId = value;
+                    });
                   },
                 ),
 
@@ -61,7 +73,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
                 DropdownButtonFormField<String>(
                   hint: Text("Select Day"),
-                  value: selectedDay,
+                  initialValue: selectedDay,
                   items: [
                     DropdownMenuItem(value: "ST", child: Text("ST")),
                     DropdownMenuItem(value: "MW", child: Text("MW")),
@@ -78,7 +90,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
                 DropdownButtonFormField<String>(
                   hint: Text("Select Time Slot"),
-                  value: selectedTime,
+                  initialValue: selectedTime,
                   items: [
                     DropdownMenuItem(
                       value: "08:00-09:30",
@@ -96,14 +108,6 @@ class _RoutineScreenState extends State<RoutineScreen> {
                       value: "13:00-14:30",
                       child: Text("13:00 - 14:30"),
                     ),
-                    DropdownMenuItem(
-                      value: "14:40-16:10",
-                      child: Text("14:40 - 16:10"),
-                    ),
-                    DropdownMenuItem(
-                      value: "16:20-17:50",
-                      child: Text("16:20 - 17:50"),
-                    ),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -118,12 +122,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _onTapAddRoutine,
-                    child: Text(
-                      "Add Routine",
-                      style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Text("Add Routine"),
                   ),
                 ),
               ],
@@ -133,86 +132,43 @@ class _RoutineScreenState extends State<RoutineScreen> {
           Divider(),
 
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection("routine")
-                  .snapshots(),
-              builder: (context, routineSnapshot) {
-                if (!routineSnapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
-
-                return StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection("courses")
-                      .snapshots(),
-                  builder: (context, courseSnapshot) {
-                    if (!courseSnapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-
-                    final routines = routineSnapshot.data!.docs
-                        .map(
-                          (doc) => Routine.fromJson(
-                            doc.data() as Map<String, dynamic>,
-                            doc.id,
-                          ),
-                        )
-                        .toList();
-
-                    final courses = courseSnapshot.data!.docs;
-                    final courseMap = {for (var c in courses) c.id: c["code"]};
-
-                    Map<String, List<Routine>> grouped = {};
-
-                    for (var r in routines) {
-                      grouped.putIfAbsent(r.day, () => []);
-                      grouped[r.day]!.add(r);
-                    }
-
-                    if (grouped.isEmpty) {
-                      return Center(child: Text("No routine added"));
-                    }
-
-                    return ListView(
-                      children: grouped.entries.map((entry) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(10),
-                              child: Text(
-                                entry.key,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+            child: grouped.isEmpty
+                ? Center(child: Text("No routine added"))
+                : ListView(
+                    children: grouped.entries.map((entry) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(10),
+                            child: Text(
+                              entry.key,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
+                          ),
 
-                            ...entry.value.map((r) {
-                              final courseName =
-                                  courseMap[r.courseId] ?? "Unknown";
+                          ...entry.value.map((r) {
+                            final courseName =
+                                courseMap[r.courseId] ?? "Unknown";
 
-                              return Card(
-                                margin: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 5,
-                                ),
-                                child: ListTile(
-                                  title: Text(courseName),
-                                  subtitle: Text("⏰ ${r.time}"),
-                                ),
-                              );
-                            }),
-                          ],
-                        );
-                      }).toList(),
-                    );
-                  },
-                );
-              },
-            ),
+                            return Card(
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
+                              child: ListTile(
+                                title: Text(courseName),
+                                subtitle: Text("⏰ ${r.time}"),
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    }).toList(),
+                  ),
           ),
         ],
       ),
@@ -227,40 +183,30 @@ class _RoutineScreenState extends State<RoutineScreen> {
       return;
     }
 
-    try {
-      final existing = await FirebaseFirestore.instance
-          .collection("routine")
-          .where("courseId", isEqualTo: selectedCourseId)
-          .where("day", isEqualTo: selectedDay)
-          .where("time", isEqualTo: selectedTime)
-          .get();
+    final routine = Routine(
+      courseId: selectedCourseId!,
+      day: selectedDay!,
+      time: selectedTime!,
+    );
 
-      if (existing.docs.isNotEmpty) {
-        falseScaffoldMessage(context, "Routine already exists ❌");
-        return;
-      }
+    final error = await Provider.of<RoutineProvider>(
+      context,
+      listen: false,
+    ).addRoutine(routine);
 
-      final routine = Routine(
-        courseId: selectedCourseId!,
-        day: selectedDay!,
-        time: selectedTime!,
-      );
+    if (!mounted) return;
 
-      await FirebaseFirestore.instance
-          .collection("routine")
-          .add(routine.toJson());
-
-      setState(() {
-        selectedCourseId = null;
-        selectedDay = null;
-        selectedTime = null;
-      });
-
-      if (!mounted) return;
-
-      trueScaffoldMessage(context, "Routine added ✅");
-    } catch (e) {
-      falseScaffoldMessage(context, e.toString());
+    if (error != null) {
+      falseScaffoldMessage(context, error);
+      return;
     }
+
+    trueScaffoldMessage(context, "Routine added ✅");
+
+    setState(() {
+      selectedCourseId = null;
+      selectedDay = null;
+      selectedTime = null;
+    });
   }
 }

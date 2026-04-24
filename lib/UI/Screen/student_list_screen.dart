@@ -18,9 +18,8 @@ class _StudentListScreenState extends State<StudentListScreen> {
   void initState() {
     super.initState();
 
-    if (!mounted) return;
-
     Future.microtask(() {
+      if (!mounted) return;
       Provider.of<CourseProvider>(context, listen: false).loadCourses();
     });
   }
