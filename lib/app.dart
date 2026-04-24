@@ -1,3 +1,4 @@
+import 'package:academix/Provider/student_provider.dart';
 import 'package:academix/UI/Screen/home_screen.dart';
 import 'package:academix/UI/Screen/sign_in_screen.dart';
 import 'package:academix/UI/Screen/sign_up_screen.dart';
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => CourseProvider()),
+        ChangeNotifierProvider(create: (context) => StudentProvider()),
       ],
       child: MaterialApp(
         title: "Academix",

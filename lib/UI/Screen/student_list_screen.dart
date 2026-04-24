@@ -1,49 +1,56 @@
 import 'package:academix/UI/Widget/main_appbar.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../Provider/course_provider.dart';
+import '../../Provider/student_provider.dart';
 import '../Data/Modals/student_model.dart';
 
-class StudentListScreen extends StatelessWidget {
+class StudentListScreen extends StatefulWidget {
   const StudentListScreen({super.key});
+
+  @override
+  State<StudentListScreen> createState() => _StudentListScreenState();
+}
+
+class _StudentListScreenState extends State<StudentListScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    if (!mounted) return;
+
+    Future.microtask(() {
+      Provider.of<CourseProvider>(context, listen: false).loadCourses();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: mainAppBar(context, "🎓 All Students"),
 
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection("courses").snapshots(),
-        builder: (context, courseSnapshot) {
-          if (!courseSnapshot.hasData) {
+      body: Consumer<CourseProvider>(
+        builder: (context, courseProvider, child) {
+          final courses = courseProvider.courses;
+
+          if (courses.isEmpty) {
             return Center(child: CircularProgressIndicator());
           }
-
-          final courses = courseSnapshot.data!.docs;
 
           return ListView.builder(
             itemCount: courses.length,
             itemBuilder: (context, index) {
               final course = courses[index];
 
-              return StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection("courses")
-                    .doc(course.id)
-                    .collection("students")
-                    .snapshots(),
-                builder: (context, studentSnapshot) {
-                  if (!studentSnapshot.hasData) {
-                    return SizedBox();
-                  }
+              Provider.of<StudentProvider>(
+                context,
+                listen: false,
+              ).loadStudents(course.id!);
 
-                  final students = studentSnapshot.data!.docs
-                      .map(
-                        (doc) => Student.fromJson(
-                          doc.data() as Map<String, dynamic>,
-                          doc.id,
-                        ),
-                      )
-                      .toList();
+              return Consumer<StudentProvider>(
+                builder: (context, studentProvider, child) {
+                  final students = studentProvider.getStudents(course.id!);
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +64,7 @@ class StudentListScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          "📚 ${course['name']} (${course['code']})",
+                          "📚 ${course.name} (${course.code})",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -86,7 +93,11 @@ class StudentListScreen extends StatelessWidget {
 
                                 IconButton(
                                   icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteStudent(student),
+                                  onPressed: () => _deleteStudent(
+                                    context,
+                                    student,
+                                    course.id!,
+                                  ),
                                 ),
                               ],
                             ),
@@ -106,5 +117,10 @@ class StudentListScreen extends StatelessWidget {
 
   void _editStudent(Student student) {}
 
-  void _deleteStudent(Student student) {}
+  void _deleteStudent(BuildContext context, Student student, String courseId) {
+    Provider.of<StudentProvider>(
+      context,
+      listen: false,
+    ).deleteStudent(courseId: courseId, studentId: student.id!);
+  }
 }
