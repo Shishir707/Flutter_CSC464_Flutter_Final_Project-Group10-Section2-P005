@@ -91,7 +91,9 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.info,
                     title: "About",
                     color: Colors.greenAccent,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/about');
+                    },
                   ),
                 ],
               ),

@@ -1,9 +1,11 @@
 import 'package:academix/UI/Widget/custom_field.dart';
 import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/UI/Widget/scaffold_message.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../Provider/course_provider.dart';
+import '../../Provider/student_provider.dart';
 import '../Data/Modals/student_model.dart';
 
 class StudentEnrollmentScreen extends StatefulWidget {
@@ -23,9 +25,18 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
   final TextEditingController _idController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (!mounted) return;
+      Provider.of<CourseProvider>(context, listen: false).loadCourses();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: mainAppBar(context, "‍🎓 Student Enrollment"),
+      appBar: mainAppBar(context, "🎓 Student Enrollment"),
 
       body: Form(
         key: _formKey,
@@ -33,16 +44,13 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
           padding: EdgeInsets.all(16),
           child: Column(
             children: [
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection("courses")
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return CircularProgressIndicator();
-                  }
+              Consumer<CourseProvider>(
+                builder: (context, provider, child) {
+                  final courses = provider.courses;
 
-                  final courses = snapshot.data!.docs;
+                  if (courses.isEmpty) {
+                    return Center(child: CircularProgressIndicator());
+                  }
 
                   return DropdownButtonFormField<String>(
                     hint: Text("Select Course"),
@@ -50,13 +58,21 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
                     items: courses.map((course) {
                       return DropdownMenuItem(
                         value: course.id,
-                        child: Text(course["name"]),
+                        child: Text(course.name),
                       );
                     }).toList(),
+
                     onChanged: (value) {
                       setState(() {
                         selectedCourseId = value;
                       });
+
+                      if (value != null) {
+                        Provider.of<StudentProvider>(
+                          context,
+                          listen: false,
+                        ).loadStudents(value);
+                      }
                     },
                   );
                 },
@@ -92,76 +108,11 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
                   ),
                 ),
               ),
-
-              SizedBox(height: 20),
-
-              Expanded(
-                child: selectedCourseId == null
-                    ? Center(child: Text("Select a course first"))
-                    : StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection("courses")
-                            .doc(selectedCourseId)
-                            .collection("students")
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return Center(child: CircularProgressIndicator());
-                          }
-
-                          final students = snapshot.data!.docs
-                              .map(
-                                (doc) => Student.fromJson(
-                                  doc.data() as Map<String, dynamic>,
-                                  doc.id,
-                                ),
-                              )
-                              .toList();
-
-                          if (students.isEmpty) {
-                            return Center(child: Text("No students added"));
-                          }
-
-                          return ListView.builder(
-                            itemCount: students.length,
-                            itemBuilder: (context, index) {
-                              final student = students[index];
-
-                              return Card(
-                                child: ListTile(
-                                  title: Text(student.name),
-                                  subtitle: Text(student.studentId),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                        onPressed: () =>
-                                            _deleteStudent(student),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.edit,
-                                          color: Colors.blue,
-                                        ),
-                                        onPressed: () => _editStudent(student),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-              ),
             ],
           ),
         ),
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _onTapStudentList,
         backgroundColor: Colors.blue,
@@ -178,50 +129,25 @@ class _StudentEnrollmentScreenState extends State<StudentEnrollmentScreen> {
       return;
     }
 
-    try {
-      final existing = await FirebaseFirestore.instance
-          .collection("courses")
-          .doc(selectedCourseId)
-          .collection("students")
-          .where("studentId", isEqualTo: _idController.text.trim())
-          .get();
+    final student = Student(
+      name: _nameController.text.trim(),
+      studentId: _idController.text.trim(),
+    );
 
-      if (!mounted) return;
+    final error = await Provider.of<StudentProvider>(
+      context,
+      listen: false,
+    ).addStudent(courseId: selectedCourseId!, student: student);
 
-      if (existing.docs.isNotEmpty) {
-        falseScaffoldMessage(context, "Student already exists");
-        return;
-      }
+    if (!mounted) return;
 
-      final student = Student(
-        name: _nameController.text.trim(),
-        studentId: _idController.text.trim(),
-      );
-
-      await FirebaseFirestore.instance
-          .collection("courses")
-          .doc(selectedCourseId)
-          .collection("students")
-          .add(student.toJson());
-
-      if (!mounted) return;
-
-      trueScaffoldMessage(context, "Student added successfully 🎉");
-      _clearController();
-    } catch (e) {
-      falseScaffoldMessage(context, e.toString());
+    if (error != null) {
+      falseScaffoldMessage(context, error);
+      return;
     }
-  }
 
-  void _editStudent(Student student) {}
-
-  void _deleteStudent(Student student) {
-    FirebaseFirestore.instance
-        .collection("courses")
-        .doc(selectedCourseId)
-        .collection("students")
-        .doc(student.id!)
-        .delete();
+    trueScaffoldMessage(context, "Student added successfully 🎉");
+    _clearController();
   }
 
   void _clearController() {
