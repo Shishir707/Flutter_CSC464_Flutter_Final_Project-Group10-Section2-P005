@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'Provider/course_provider.dart';
+import 'UI/Screen/about_screen.dart';
 import 'UI/Screen/add_course.dart';
 import 'UI/Screen/attendance_screen.dart';
 import 'UI/Screen/attendance_summary_screen.dart';
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
           '/routine': (_) => RoutineScreen(),
           '/attendance': (_) => AttendanceScreen(),
           '/summary': (_) => AttendanceSummaryScreen(),
+          '/about': (_) => AboutScreen(),
         },
 
         theme: ThemeData(
