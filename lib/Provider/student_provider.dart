@@ -50,6 +50,18 @@ class StudentProvider extends ChangeNotifier {
     return null;
   }
 
+  Future<void> editStudent({
+    required String courseId,
+    required Student student,
+  }) async {
+    await _firestore
+        .collection("courses")
+        .doc(courseId)
+        .collection("students")
+        .doc(student.id)
+        .update(student.toJson());
+  }
+
   Future<void> deleteStudent({
     required String courseId,
     required String studentId,

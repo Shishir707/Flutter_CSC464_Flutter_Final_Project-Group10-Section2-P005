@@ -1,9 +1,11 @@
 import 'package:academix/UI/Widget/main_appbar.dart';
+import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../Provider/course_provider.dart';
 import '../../Provider/student_provider.dart';
+import '../Data/Modals/course_modal.dart';
 import '../Data/Modals/student_model.dart';
 
 class StudentListScreen extends StatefulWidget {
@@ -20,7 +22,20 @@ class _StudentListScreenState extends State<StudentListScreen> {
 
     Future.microtask(() {
       if (!mounted) return;
-      Provider.of<CourseProvider>(context, listen: false).loadCourses();
+      final courseProvider = Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      );
+      final studentProvider = Provider.of<StudentProvider>(
+        context,
+        listen: false,
+      );
+
+      courseProvider.loadCourses();
+
+      for (var course in courseProvider.courses) {
+        studentProvider.loadStudents(course.id!);
+      }
     });
   }
 
@@ -87,7 +102,8 @@ class _StudentListScreenState extends State<StudentListScreen> {
                               children: [
                                 IconButton(
                                   icon: Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () => _editStudent(student),
+                                  onPressed: () =>
+                                      _editStudent(student, course),
                                 ),
 
                                 IconButton(
@@ -114,12 +130,64 @@ class _StudentListScreenState extends State<StudentListScreen> {
     );
   }
 
-  void _editStudent(Student student) {}
-
   void _deleteStudent(BuildContext context, Student student, String courseId) {
     Provider.of<StudentProvider>(
       context,
       listen: false,
     ).deleteStudent(courseId: courseId, studentId: student.id!);
+  }
+
+  void _editStudent(Student student, Course course) {
+    final nameController = TextEditingController(text: student.name);
+    final idController = TextEditingController(text: student.studentId);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Edit Student"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: "Name"),
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: idController,
+                decoration: InputDecoration(labelText: "Student ID"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+
+            ElevatedButton(
+              onPressed: () async {
+                final updatedStudent = Student(
+                  id: student.id,
+                  name: nameController.text.trim(),
+                  studentId: idController.text.trim(),
+                );
+
+                await Provider.of<StudentProvider>(
+                  context,
+                  listen: false,
+                ).editStudent(courseId: course.id!, student: updatedStudent);
+
+                trueScaffoldMessage(context, "Updated student info");
+
+                Navigator.pop(context);
+              },
+              child: Text("Update"),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

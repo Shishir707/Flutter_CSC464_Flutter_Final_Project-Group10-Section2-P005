@@ -50,92 +50,94 @@ class _RoutineScreenState extends State<RoutineScreen> {
     return Scaffold(
       appBar: mainAppBar(context, '📅 Class Routine'),
 
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(12),
-            child: Column(
-              children: [
-                DropdownButtonFormField<String>(
-                  hint: Text("Select Course"),
-                  initialValue: selectedCourseId,
-                  items: courses.map((c) {
-                    return DropdownMenuItem(value: c.id, child: Text(c.code));
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCourseId = value;
-                    });
-                  },
-                ),
-
-                SizedBox(height: 10),
-
-                DropdownButtonFormField<String>(
-                  hint: Text("Select Day"),
-                  initialValue: selectedDay,
-                  items: [
-                    DropdownMenuItem(value: "ST", child: Text("ST")),
-                    DropdownMenuItem(value: "MW", child: Text("MW")),
-                    DropdownMenuItem(value: "AR", child: Text("AR")),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedDay = value;
-                    });
-                  },
-                ),
-
-                SizedBox(height: 10),
-
-                DropdownButtonFormField<String>(
-                  hint: Text("Select Time Slot"),
-                  initialValue: selectedTime,
-                  items: [
-                    DropdownMenuItem(
-                      value: "08:00-09:30",
-                      child: Text("08:00 - 09:30"),
-                    ),
-                    DropdownMenuItem(
-                      value: "09:40-11:10",
-                      child: Text("09:40 - 11:10"),
-                    ),
-                    DropdownMenuItem(
-                      value: "11:20-12:50",
-                      child: Text("11:20 - 12:50"),
-                    ),
-                    DropdownMenuItem(
-                      value: "13:00-14:30",
-                      child: Text("13:00 - 14:30"),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value;
-                    });
-                  },
-                ),
-
-                SizedBox(height: 10),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _onTapAddRoutine,
-                    child: Text("Add Routine"),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  DropdownButtonFormField<String>(
+                    hint: Text("Select Course"),
+                    initialValue: selectedCourseId,
+                    items: courses.map((c) {
+                      return DropdownMenuItem(value: c.id, child: Text(c.code));
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCourseId = value;
+                      });
+                    },
                   ),
-                ),
-              ],
+
+                  SizedBox(height: 10),
+
+                  DropdownButtonFormField<String>(
+                    hint: Text("Select Day"),
+                    initialValue: selectedDay,
+                    items: [
+                      DropdownMenuItem(value: "ST", child: Text("ST")),
+                      DropdownMenuItem(value: "MW", child: Text("MW")),
+                      DropdownMenuItem(value: "AR", child: Text("AR")),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedDay = value;
+                      });
+                    },
+                  ),
+
+                  SizedBox(height: 10),
+
+                  DropdownButtonFormField<String>(
+                    hint: Text("Select Time Slot"),
+                    initialValue: selectedTime,
+                    items: [
+                      DropdownMenuItem(
+                        value: "08:00-09:30",
+                        child: Text("08:00 - 09:30"),
+                      ),
+                      DropdownMenuItem(
+                        value: "09:40-11:10",
+                        child: Text("09:40 - 11:10"),
+                      ),
+                      DropdownMenuItem(
+                        value: "11:20-12:50",
+                        child: Text("11:20 - 12:50"),
+                      ),
+                      DropdownMenuItem(
+                        value: "13:00-14:30",
+                        child: Text("13:00 - 14:30"),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTime = value;
+                      });
+                    },
+                  ),
+
+                  SizedBox(height: 10),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _onTapAddRoutine,
+                      child: Text("Add Routine"),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          Divider(),
+            Divider(),
 
-          Expanded(
-            child: grouped.isEmpty
-                ? Center(child: Text("No routine added"))
-                : ListView(
-                    children: grouped.entries.map((entry) {
+            ListView(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              children: grouped.isEmpty
+                  ? [Center(child: Text("No routine added"))]
+                  : grouped.entries.map((entry) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -168,9 +170,9 @@ class _RoutineScreenState extends State<RoutineScreen> {
                         ],
                       );
                     }).toList(),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
