@@ -14,14 +14,15 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   final AcademixController _controller = AcademixController();
   String? _selectedCourseId;
-  DateTime _selectedDate = DateTime.now();
   String _searchText = '';
   final Map<String, String> _records = <String, String>{};
   bool _isSaving = false;
   bool _isFetchingSaved = false;
+  bool _submittedToday = false;
 
-  DateTime get _normalizedDate =>
-      DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+  DateTime get _today => DateTime.now();
+
+  DateTime get _normalizedDate => DateTime(_today.year, _today.month, _today.day);
 
   @override
   Widget build(BuildContext context) {
@@ -115,14 +116,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   const Icon(Icons.today_rounded, color: Colors.blue),
                   const SizedBox(width: 8),
                   Text(
-                    'Date: ${_formatDate(_selectedDate)}',
+                    'Date: ${_formatDate(_today)}',
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: _pickDate,
-                    icon: const Icon(Icons.calendar_month),
-                    label: const Text('Change Date'),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'Today Only',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ],
               ),
@@ -162,7 +169,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         }
 
         for (final student in students) {
-          final key = student['id']?.toString() ?? '';
+          final key = _studentKey(student);
           if (key.isNotEmpty) {
             _records.putIfAbsent(key, () => 'Absent');
           }
@@ -182,7 +189,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         }
 
         final present = filtered
-            .where((s) => _records[s['id']?.toString() ?? ''] == 'Present')
+            .where((s) => _records[_studentKey(s)] == 'Present')
             .length;
         final absent = filtered.length - present;
         final ratio = filtered.isEmpty ? 0.0 : (present / filtered.length) * 100;
@@ -195,7 +202,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _setAllStatus(filtered, 'Present'),
+                    onPressed: _submittedToday ? null : () => _setAllStatus(filtered, 'Present'),
                     icon: const Icon(Icons.check_circle_outline),
                     label: const Text('Mark All Present'),
                   ),
@@ -203,7 +210,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _setAllStatus(filtered, 'Absent'),
+                    onPressed: _submittedToday ? null : () => _setAllStatus(filtered, 'Absent'),
                     icon: const Icon(Icons.highlight_off),
                     label: const Text('Mark All Absent'),
                   ),
@@ -211,12 +218,27 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ],
             ),
             const SizedBox(height: 10),
+            if (_submittedToday)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: const Text(
+                  'Attendance already submitted for today. Editing is locked.',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
             Expanded(child: _buildTable(filtered)),
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _isSaving ? null : _saveAttendance,
+                onPressed: (_isSaving || _submittedToday) ? null : _saveAttendance,
                 icon: _isSaving
                     ? const SizedBox(
                         width: 16,
@@ -227,7 +249,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 label: Text(
                   _isSaving
                       ? 'Saving...'
-                      : 'Save Attendance (${_formatDate(_selectedDate)})',
+                      : 'Submit Attendance (${_formatDate(_today)})',
                 ),
               ),
             ),
@@ -297,7 +319,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   separatorBuilder: (_, __) => Divider(height: 1, color: Colors.blue.shade50),
                   itemBuilder: (context, index) {
                     final student = students[index];
-                    final key = student['id']?.toString() ?? '';
+                    final key = _studentKey(student);
                     final status = _records[key] ?? 'Absent';
                     final short = status == 'Present' ? 'P' : 'A';
                     final color = short == 'P' ? Colors.green : Colors.red;
@@ -324,26 +346,38 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _tinyButton(
-                                  text: 'P',
-                                  isActive: status == 'Present',
-                                  activeColor: Colors.green,
-                                  onTap: () {
-                                    setState(() {
-                                      _records[key] = 'Present';
-                                    });
-                                  },
+                                ChoiceChip(
+                                  label: const Text('Present'),
+                                  selected: status == 'Present',
+                                  selectedColor: Colors.green,
+                                  labelStyle: TextStyle(
+                                    color: status == 'Present' ? Colors.white : Colors.green,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  onSelected: _submittedToday
+                                      ? null
+                                      : (_) {
+                                          setState(() {
+                                            _records[key] = 'Present';
+                                          });
+                                        },
                                 ),
                                 const SizedBox(width: 6),
-                                _tinyButton(
-                                  text: 'A',
-                                  isActive: status == 'Absent',
-                                  activeColor: Colors.red,
-                                  onTap: () {
-                                    setState(() {
-                                      _records[key] = 'Absent';
-                                    });
-                                  },
+                                ChoiceChip(
+                                  label: const Text('Absent'),
+                                  selected: status == 'Absent',
+                                  selectedColor: Colors.red,
+                                  labelStyle: TextStyle(
+                                    color: status == 'Absent' ? Colors.white : Colors.red,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  onSelected: _submittedToday
+                                      ? null
+                                      : (_) {
+                                          setState(() {
+                                            _records[key] = 'Absent';
+                                          });
+                                        },
                                 ),
                               ],
                             ),
@@ -413,26 +447,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-
-    if (picked == null) {
-      return;
-    }
-
-    setState(() {
-      _selectedDate = picked;
-      _records.clear();
-    });
-
-    await _fetchExistingAttendance();
-  }
-
   Future<void> _fetchExistingAttendance() async {
     if (_selectedCourseId == null) {
       return;
@@ -440,6 +454,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     setState(() {
       _isFetchingSaved = true;
+      _submittedToday = false;
     });
 
     try {
@@ -461,6 +476,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
 
       setState(() {
+        _submittedToday = data.docs.isNotEmpty;
         for (final entry in existingRecords.entries) {
           _records[entry.key] = entry.value.toString();
         }
@@ -484,6 +500,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return;
     }
 
+    if (_submittedToday) {
+      falseScaffoldMessage(context, 'Attendance already submitted for today');
+      return;
+    }
+
     if (_records.isEmpty) {
       falseScaffoldMessage(context, 'No students found to mark attendance');
       return;
@@ -504,22 +525,31 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           .limit(1)
           .get();
 
+      if (existing.docs.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _submittedToday = true;
+          });
+          falseScaffoldMessage(context, 'Attendance already submitted for today');
+        }
+        return;
+      }
+
       final payload = <String, dynamic>{
         'date': Timestamp.fromDate(_normalizedDate),
         'records': _records,
       };
 
-      if (existing.docs.isNotEmpty) {
-        await collection.doc(existing.docs.first.id).update(payload);
-      } else {
-        await collection.add(payload);
-      }
+      await collection.add(payload);
 
       if (!mounted) {
         return;
       }
 
       trueScaffoldMessage(context, 'Attendance saved successfully');
+      setState(() {
+        _submittedToday = true;
+      });
     } catch (_) {
       if (mounted) {
         falseScaffoldMessage(context, 'Failed to save attendance');
@@ -536,7 +566,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   void _setAllStatus(List<Map<String, dynamic>> students, String status) {
     setState(() {
       for (final student in students) {
-        final key = student['id']?.toString() ?? '';
+        final key = _studentKey(student);
         if (key.isNotEmpty) {
           _records[key] = status;
         }
@@ -619,33 +649,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _tinyButton({
-    required String text,
-    required bool isActive,
-    required Color activeColor,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 30,
-        height: 28,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isActive ? activeColor : activeColor.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isActive ? Colors.white : activeColor,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _cell(
     String text, {
@@ -698,5 +701,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final y = date.year.toString();
     return '$d/$m/$y';
   }
-}
 
+  String _studentKey(Map<String, dynamic> student) {
+    final id = student['id']?.toString() ?? '';
+    if (id.isNotEmpty) {
+      return id;
+    }
+    return student['studentId']?.toString() ?? '';
+  }
+}
