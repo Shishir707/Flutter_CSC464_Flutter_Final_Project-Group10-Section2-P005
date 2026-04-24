@@ -1,7 +1,8 @@
 import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/UI/Widget/scaffold_message.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../Provider/course_provider.dart';
 import '../Data/Modals/course_modal.dart';
 import '../Widget/edit_dialog.dart';
 
@@ -14,33 +15,29 @@ class CourseScreen extends StatefulWidget {
 
 class _CourseScreenState extends State<CourseScreen> {
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      Provider.of<CourseProvider>(context, listen: false).loadCourses();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: mainAppBar(context, "📚 All Courses"),
 
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection("courses").snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      body: Consumer<CourseProvider>(
+        builder: (context, provider, child) {
+          if (provider.courses.isEmpty) {
             return Center(child: Text("No courses found"));
           }
 
-          final courses = snapshot.data!.docs
-              .map(
-                (doc) =>
-                    Course.fromJson(doc.data() as Map<String, dynamic>, doc.id),
-              )
-              .toList();
-
           return ListView.builder(
-            padding: EdgeInsets.all(16),
-            itemCount: courses.length,
+            padding: EdgeInsets.all(12),
+            itemCount: provider.courses.length,
             itemBuilder: (context, index) {
-              final course = courses[index];
+              final course = provider.courses[index];
 
               return Container(
                 margin: EdgeInsets.only(bottom: 14),
@@ -50,7 +47,7 @@ class _CourseScreenState extends State<CourseScreen> {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: Colors.black26,
                       blurRadius: 10,
                       offset: Offset(0, 5),
                     ),
@@ -61,7 +58,6 @@ class _CourseScreenState extends State<CourseScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(
@@ -90,10 +86,7 @@ class _CourseScreenState extends State<CourseScreen> {
 
                     Text(
                       " • ${course.code}",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ],
                 ),
@@ -102,6 +95,7 @@ class _CourseScreenState extends State<CourseScreen> {
           );
         },
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _addCourse,
         backgroundColor: Colors.blue[300],
@@ -110,8 +104,11 @@ class _CourseScreenState extends State<CourseScreen> {
     );
   }
 
-  void _onTapDeleteButton(String id) {
-    FirebaseFirestore.instance.collection("courses").doc(id).delete();
+  void _onTapDeleteButton(String id) async {
+    await Provider.of<CourseProvider>(context, listen: false).deleteCourse(id);
+
+    if (!mounted) return;
+
     trueScaffoldMessage(context, "Deleted Successfully");
   }
 

@@ -2,7 +2,9 @@ import 'package:academix/UI/Widget/main_appbar.dart';
 import 'package:academix/UI/Widget/scaffold_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../Provider/course_provider.dart';
 import '../Data/Modals/course_modal.dart';
 import '../Widget/custom_field.dart';
 
@@ -74,16 +76,16 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
         code: _codeController.text.trim(),
       );
 
-      final docRef = FirebaseFirestore.instance.collection("courses").doc();
-
-      await docRef.set(course.toJson());
+      await Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      ).addCourse(course);
 
       if (!mounted) return;
 
       trueScaffoldMessage(context, 'Course added successfully 🎉');
 
       _clearController();
-
       Navigator.pop(context);
     } catch (e) {
       falseScaffoldMessage(context, e.toString());
