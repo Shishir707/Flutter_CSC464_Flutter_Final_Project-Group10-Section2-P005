@@ -73,7 +73,7 @@ class MyApp extends StatelessWidget {
 
           filledButtonTheme: FilledButtonThemeData(
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.blue,
+              backgroundColor: Colors.blue[300],
               foregroundColor: Colors.black,
               padding: EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
