@@ -574,6 +574,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
   }
 
+
   void _showHistoryDetails(Map<String, dynamic> records) {
     showDialog<void>(
       context: context,
